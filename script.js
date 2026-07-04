@@ -1,39 +1,128 @@
+// 1. إخفاء أنيميشن التحميل بشكل مضاد للأخطاء (Bulletproof Loader)
+const loader = document.getElementById("loader");
+
+function removeLoader() {
+    if (loader) {
+        loader.style.opacity = "0";
+        setTimeout(() => {
+            loader.style.visibility = "hidden";
+        }, 500);
+    }
+}
+
+// إذا انتهى تحميل الصفحة بالفعل أو عند اكتماله فوراً
+if (document.readyState === "complete" || document.readyState === "interactive") {
+    removeLoader();
+} else {
+    window.addEventListener("load", removeLoader);
+}
+
+// حماية إضافية (Fallback): إذا تعطل أي شيء، تختفي شاشة التحميل تلقائياً بعد ثانية واحدة
+setTimeout(removeLoader, 1000);
+
+
+// 2. باقي الكود الخاص بالتفاعلية يشتغل عادي بعد تجهيز الـ DOM
 document.addEventListener("DOMContentLoaded", () => {
     
-    // 1. Preloader Closer
-    window.addEventListener("load", () => {
-        const preloader = document.getElementById("preloader");
-        preloader.style.opacity = "0";
-        setTimeout(() => {
-            preloader.style.visibility = "hidden";
-        }, 500);
-    });
+    // شريط تقدم القراءة (Scroll Progress Bar)
+    const progressBar = document.getElementById("progress-bar");
+    if (progressBar) {
+        window.addEventListener("scroll", () => {
+            const totalHeight = document.documentElement.scrollHeight - window.innerHeight;
+            const scrollPosition = window.scrollY;
+            const scrollPercentage = totalHeight > 0 ? (scrollPosition / totalHeight) * 100 : 0;
+            progressBar.style.width = scrollPercentage + "%";
+        });
+    }
 
-    // 2. Scroll Progress Bar Implementation
-    window.addEventListener("scroll", () => {
-        const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
-        const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
-        const scrolled = (winScroll / height) * 100;
-        document.getElementById("scroll-progress").style.width = scrolled + "%";
-    });
-
-    // 3. Mobile Navigation Menu Toggle
+    // القائمة المستجيبة للهواتف (Mobile Menu)
     const hamburger = document.getElementById("hamburger");
     const navMenu = document.getElementById("nav-menu");
-    const navLinks = document.querySelectorAll(".nav-link");
 
-    hamburger.addEventListener("click", () => {
-        hamburger.classList.toggle("open");
-        navMenu.classList.toggle("open");
-    });
+    if (hamburger && navMenu) {
+        hamburger.addEventListener("click", () => {
+            navMenu.classList.toggle("active");
+            hamburger.classList.toggle("open");
+            const spans = hamburger.querySelectorAll("span");
+            if (hamburger.classList.contains("open")) {
+                spans[0].style.transform = "rotate(-45deg) translate(-5px, 6px)";
+                spans[1].style.opacity = "0";
+                spans[2].style.transform = "rotate(45deg) translate(-5px, -6px)";
+            } else {
+                spans[0].style.transform = "none";
+                spans[1].style.opacity = "1";
+                spans[2].style.transform = "none";
+            }
+        });
+    }
 
+    // غلق القائمة عند الضغط على أي رابط
+    const navLinks = document.querySelectorAll("#nav-menu a");
     navLinks.forEach(link => {
         link.addEventListener("click", () => {
-            hamburger.classList.remove("open");
-            navMenu.classList.remove("open");
+            if (navMenu && hamburger) {
+                navMenu.classList.remove("active");
+                hamburger.classList.remove("open");
+                const spans = hamburger.querySelectorAll("span");
+                if (spans.length >= 3) {
+                    spans[0].style.transform = "none";
+                    spans[1].style.opacity = "1";
+                    spans[2].style.transform = "none";
+                }
+            }
         });
     });
 
+    // تأثيرات ظهور العناصر عند النزول (Scroll Reveal)
+    const revealElements = document.querySelectorAll(".scroll-reveal");
+    if ('IntersectionObserver' in window) {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("visible");
+                }
+            });
+        }, { threshold: 0.1, rootMargin: "0px 0px -40px 0px" });
+
+        revealElements.forEach(el => observer.observe(el));
+    } else {
+        revealElements.forEach(el => el.classList.add("visible"));
+    }
+
+    // تغيير الرابط النشط تلقائياً أثناء النزول
+    const sections = document.querySelectorAll("section");
+    window.addEventListener("scroll", () => {
+        let currentSectionId = "hero";
+        sections.forEach(section => {
+            const top = section.offsetTop - 100;
+            if (window.scrollY >= top) {
+                currentSectionId = section.getAttribute("id");
+            }
+        });
+
+        navLinks.forEach(link => {
+            link.classList.remove("active");
+            if (link.getAttribute("href") === `#${currentSectionId}`) {
+                link.classList.add("active");
+            }
+        });
+    });
+
+    // أسئلة وأجوبة (FAQ Accordion)
+    const faqItems = document.querySelectorAll(".faq-item");
+    faqItems.forEach(item => {
+        const header = item.querySelector(".faq-header");
+        if (header) {
+            header.addEventListener("click", () => {
+                const alreadyActive = item.classList.contains("active");
+                faqItems.forEach(i => i.classList.remove("active"));
+                if (!alreadyActive) {
+                    item.classList.add("active");
+                }
+            });
+        }
+    });
+});
     // 4. Scroll Active Navigation Indicator
     const sections = document.querySelectorAll("section");
     window.addEventListener("scroll", () => {
