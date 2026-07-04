@@ -1,18 +1,23 @@
-// 1. إخفاء شاشة التحميل (Preloader) بعد اكتمال تحميل الصفحة
-window.addEventListener('load', () => {
+// دالة إخفاء شاشة التحميل بسلاسة
+function removePreloader() {
     const preloader = document.getElementById('preloader');
-    if (preloader) {
+    if (preloader && preloader.style.display !== 'none') {
         preloader.style.opacity = '0';
-        preloader.style.transition = 'opacity 0.5s ease';
+        preloader.style.transition = 'opacity 0.4s ease';
         setTimeout(() => {
             preloader.style.display = 'none';
-        }, 500); // يختفي بسلاسة بعد نصف ثانية
+        }, 400);
     }
-});
+}
 
+// 1. خيار الأمان الفوري: إخفاء الشاشة بعد ثانيتين (2000 ملي ثانية) تلقائياً مهما حدث لضمان دخول الزائر
+setTimeout(removePreloader, 2000);
+
+// 2. إخفاء الشاشة بمجرد جاهزية هيكل الصفحة (أسرع بكثير من الانتظار الكامل)
 document.addEventListener('DOMContentLoaded', () => {
-    
-    // 2. القائمة المتجاوبة للموبايل (Hamburger Menu)
+    removePreloader();
+
+    // القائمة المتجاوبة للموبايل (Hamburger Menu)
     const hamburger = document.getElementById('hamburger');
     const navMenu = document.getElementById('nav-menu');
 
@@ -22,7 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
             navMenu.classList.toggle('active');
         });
 
-        // غلق القائمة تلقائياً عند الضغط على أي رابط للتنقل
         const navLinks = document.querySelectorAll('.nav-link');
         navLinks.forEach(link => {
             link.addEventListener('click', () => {
@@ -32,8 +36,51 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // 3. شريط تقدم القراءة الفوقي (Scroll Progress Bar)
+    // شريط تقدم القراءة الفوقي (Scroll Progress Bar)
     window.addEventListener('scroll', () => {
+        const scrollProgress = document.getElementById('scroll-progress');
+        if (scrollProgress) {
+            const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            if (totalHeight > 0) {
+                const progress = (window.pageYOffset / totalHeight) * 100;
+                scrollProgress.style.width = `${progress}%`;
+            }
+        }
+    });
+
+    // تفعيل تأثيرات الظهور عند التمرير (Animate on Scroll)
+    const animatedElements = document.querySelectorAll('.animate-on-scroll');
+    if (animatedElements.length > 0 && 'IntersectionObserver' in window) {
+        const observerOptions = { root: null, rootMargin: '0px', threshold: 0.15 };
+        const scrollObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('show');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, observerOptions);
+
+        animatedElements.forEach(el => scrollObserver.observe(el));
+    } else {
+        // حل احتياطي للمتصفحات القديمة التي لا تدعم الأوبزرفر
+        animatedElements.forEach(el => el.classList.add('show'));
+    }
+
+    // التحكم في الأسئلة الشائعة (FAQ Accordion)
+    const faqItems = document.querySelectorAll('.faq-item');
+    faqItems.forEach(item => {
+        const question = item.querySelector('.faq-question');
+        if (question) {
+            question.addEventListener('click', () => {
+                faqItems.forEach(otherItem => {
+                    if (otherItem !== item) otherItem.classList.remove('active');
+                });
+                item.classList.toggle('active');
+            });
+        }
+    });
+});
         const scrollProgress = document.getElementById('scroll-progress');
         if (scrollProgress) {
             const totalHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
